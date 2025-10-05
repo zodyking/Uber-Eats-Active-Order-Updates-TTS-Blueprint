@@ -7,21 +7,26 @@ blueprint:
 
     This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected. It triggers on updates to order stage, driver name, driver ETA, restaurant name, and driver location, and uses TTS to speak customized messages.
 
-    **Features:**
+    **Version:** 1.0
+
+    **Key Features:**
     - Announces new orders with restaurant name.
     - Announces when a driver is assigned.
     - Announces order stage changes.
     - Announces ETA updates with latest arrival time.
-    - Announces driver location updates with cross street (with 30-second delay to avoid frequent announcements).
+    - Announces driver location updates with cross street (includes a 30 second delay to avoid frequent announcements).
+    - Queued mode to avoid overlapping TTS playback.
 
     **Requirements:**
     - Uber Eats Order Tracking integration installed and configured.
-    - TTS engine (e.g., Google Translate TTS) and media player set up.
+    - A TTS engine configured in Home Assistant (e.g., Google Translate TTS).
+    - A media player entity (e.g., `media_player.brandons_bedroom`) to play announcements.
 
-    **Notes:**
-    - The automation is queued to handle multiple updates without overlapping.
-    - Customize entity IDs and TTS messages as needed.
-    - For best results, ensure your Uber Eats sensors are updating correctly during an active order.
+    **Important Notes:**
+    - The blueprint exposes inputs (entity IDs / TTS engine / media player) that must be filled when creating the automation from the blueprint.
+    - Ensure your Uber Eats sensors update their **state** (not only attributes) — this blueprint uses `trigger: state` triggers.
+    - The 30 second driver-location delay is intentional to reduce announcement spam; tune or remove if desired.
+    - This description block is informational only — the automation logic below remains unchanged.
 
   domain: automation
 
@@ -101,6 +106,7 @@ condition:
     state: "on"
 
 action:
+  # expose blueprint inputs at runtime as variables (safe to reference in templates)
   - variables:
       user_name: !input user_name
       order_stage_sensor: !input order_stage_sensor
