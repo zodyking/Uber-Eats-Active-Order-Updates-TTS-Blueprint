@@ -2,28 +2,49 @@ blueprint:
   name: Uber Eats Active Order Updates TTS Blueprint
   description: >-
     ### Uber Eats Active Order Updates TTS Blueprint
+
     ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
-    This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected.
-    It triggers on updates to order stage, driver name, driver ETA, restaurant name, and driver location,
+
+    This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected.  
+    It triggers on updates to order stage, driver name, driver ETA, restaurant name, and driver location,  
     and uses TTS to speak customized messages.
-    **Version:** 1.0
-    **Key Features:**
-    * Announces new orders with restaurant name.
-    * Announces when a driver is assigned.
-    * Announces order stage changes.
-    * Announces ETA updates with latest arrival time.
-    * Announces driver location updates with cross street (includes a 30 second delay to avoid frequent announcements).
-    * Queued mode to avoid overlapping TTS playback.
-    **Requirements:**
-    * Uber Eats Order Tracking integration installed and configured.
-    * A TTS engine configured in Home Assistant (e.g., Google Translate TTS).
-    * A media player entity (e.g., `media_player.brandons_bedroom`) to play announcements.
-    **Important Notes:**
-    * The blueprint exposes inputs (entity IDs / TTS engine / media player) that must be filled when creating the automation from the blueprint.
-    * Ensure your Uber Eats sensors update their **state** (not only attributes) — this blueprint uses `trigger: state` triggers.
-    * The 30 second driver-location delay is intentional to reduce announcement spam; tune or remove if desired.
-    * This description block is informational only — the automation logic below remains unchanged.
+
+    **Version:** 1.0  
+
+    **Key Features:**  
+
+    * Announces new orders with restaurant name.  
+
+    * Announces when a driver is assigned.  
+
+    * Announces order stage changes.  
+
+    * Announces ETA updates with latest arrival time.  
+
+    * Announces driver location updates with cross street (includes a 30 second delay to avoid frequent announcements).  
+
+    * Queued mode to avoid overlapping TTS playback.  
+
+    **Requirements:**  
+
+    * Uber Eats Order Tracking integration installed and configured.  
+
+    * A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
+
+    * A media player entity (e.g., `media_player.brandons_bedroom`) to play announcements.  
+
+    **Important Notes:**  
+
+    * The blueprint exposes inputs (entity IDs / TTS engine / media player) that must be filled when creating the automation from the blueprint.  
+
+    * Ensure your Uber Eats sensors update their **state** (not only attributes) — this blueprint uses `trigger: state` triggers.  
+
+    * The 30 second driver-location delay is intentional to reduce announcement spam; tune or remove if desired.  
+
+    * This description block is informational only — the automation logic below remains unchanged.  
+
   domain: automation
+
   input:
     user_name:
       name: User Name
@@ -76,6 +97,7 @@ blueprint:
       selector:
         entity:
           domain: tts
+
 trigger:
   - entity_id: !input order_stage_sensor
     trigger: state
@@ -92,14 +114,14 @@ trigger:
   - entity_id: !input driver_location_sensor
     trigger: state
     id: driver_location_change
-  - entity_id: !input active_order_sensor
-    trigger: state
-    id: active_order_change
+
 condition:
   - condition: state
     entity_id: !input active_order_sensor
     state: "on"
+
 action:
+  # expose blueprint inputs at runtime as variables (safe to reference in templates)
   - variables:
       user_name: !input user_name
       order_stage_sensor: !input order_stage_sensor
@@ -110,6 +132,7 @@ action:
       latest_arrival_sensor: !input latest_arrival_sensor
       tts_player: !input tts_player
       tts_engine: !input tts_engine
+
   - choose:
       - conditions:
           - condition: trigger
@@ -124,6 +147,7 @@ action:
               media_player_entity_id: !input tts_player
               message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. New ' ~ states(restaurant_name_sensor) ~ ' order received for ' ~ user_name) | string }}"
         alias: If Restaurant Name Updates
+
       - conditions:
           - condition: trigger
             id: driver_name_change
@@ -137,6 +161,7 @@ action:
               media_player_entity_id: !input tts_player
               message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. ' ~ states(driver_name_sensor) ~ ' has been assigned to your ' ~ states(restaurant_name_sensor) ~ ' order.') | string }}"
         alias: If Driver Name Updates
+
       - conditions:
           - condition: trigger
             id: order_stage_change
@@ -150,6 +175,7 @@ action:
               media_player_entity_id: !input tts_player
               message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. Your ' ~ states(restaurant_name_sensor) ~ ' order is now ' ~ states(order_stage_sensor)) | string }}"
         alias: If Order Stage Updates
+
       - conditions:
           - condition: trigger
             id: driver_eta_change
@@ -163,6 +189,7 @@ action:
               media_player_entity_id: !input tts_player
               message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. Your ' ~ states(restaurant_name_sensor) ~ ' order is now expected to arrive at ' ~ states(driver_eta_sensor) ~ ' and no later than ' ~ states(latest_arrival_sensor)) | string }}"
         alias: If Driver ETA Updates
+
       - conditions:
           - condition: trigger
             id: driver_location_change
@@ -178,19 +205,8 @@ action:
               media_player_entity_id: !input tts_player
               message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. ' ~ states(driver_name_sensor) ~ ' was last seen near ' ~ (states(driver_location_sensor) | default('')) | default('') ) | string }}"
         alias: If Driver Location Updates
-      - conditions:
-          - condition: trigger
-            id: active_order_change
-          - condition: template
-            value_template: "{{ trigger.to_state.state != 'off' }}"
-        sequence:
-          - service: tts.speak
-            target:
-              entity_id: !input tts_engine
-            data:
-              media_player_entity_id: !input tts_player
-              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. New Uber Eats order received for ' ~ user_name ~ ' from ' ~ states(restaurant_name_sensor)) | string }}"
-        alias: If Active Order Changes
+
     default: []
+
 mode: queued
 max: 4
