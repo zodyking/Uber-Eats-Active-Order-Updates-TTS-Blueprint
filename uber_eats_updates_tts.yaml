@@ -1,5 +1,5 @@
 blueprint:
-  name: Uber Eats Active Order Updates TTS (fixed)
+  name: Uber Eats Active Order Updates TTS Blueprint
   description: >-
     Announces Uber Eats order updates via TTS. This blueprint avoids using
     !input inside Jinja templates and ensures templated values are strings.
