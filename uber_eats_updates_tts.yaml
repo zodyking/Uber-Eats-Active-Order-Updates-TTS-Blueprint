@@ -1,212 +1,164 @@
-blueprint:
-  name: Uber Eats Active Order Updates TTS Blueprint
-  description: >-
-    ### Uber Eats Active Order Updates TTS Blueprint
-
-    ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
-
-    This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected.  
-    It triggers on updates to order stage, driver name, driver ETA, restaurant name, and driver location,  
-    and uses TTS to speak customized messages.
-
-    **Version:** 1.0  
-
-    **Key Features:**  
-
-    * Announces new orders with restaurant name.  
-
-    * Announces when a driver is assigned.  
-
-    * Announces order stage changes.  
-
-    * Announces ETA updates with latest arrival time.  
-
-    * Announces driver location updates with cross street (includes a 30 second delay to avoid frequent announcements).  
-
-    * Queued mode to avoid overlapping TTS playback.  
-
-    **Requirements:**  
-
-    * Uber Eats Order Tracking integration installed and configured.  
-
-    * A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
-
-    * A media player entity (e.g., `media_player.brandons_bedroom`) to play announcements.  
-
-    **Important Notes:**  
-
-    * The blueprint exposes inputs (entity IDs / TTS engine / media player) that must be filled when creating the automation from the blueprint.  
-
-    * Ensure your Uber Eats sensors update their **state** (not only attributes) — this blueprint uses `trigger: state` triggers.  
-
-    * The 30 second driver-location delay is intentional to reduce announcement spam; tune or remove if desired.  
-
-    * This description block is informational only — the automation logic below remains unchanged.  
-
-  domain: automation
-
-  input:
-    user_name:
-      name: User Name
-      description: The user's name to include in TTS messages (e.g., Brandon)
-      selector:
-        text:
-    active_order_sensor:
-      name: Active Order Binary Sensor
-      description: The binary sensor for active order
-      selector:
-        entity:
-          domain: binary_sensor
-    order_stage_sensor:
-      name: Order Stage Sensor
-      selector:
-        entity:
-          domain: sensor
-    driver_name_sensor:
-      name: Driver Name Sensor
-      selector:
-        entity:
-          domain: sensor
-    driver_eta_sensor:
-      name: Driver ETA Sensor
-      selector:
-        entity:
-          domain: sensor
-    restaurant_name_sensor:
-      name: Restaurant Name Sensor
-      selector:
-        entity:
-          domain: sensor
-    driver_location_sensor:
-      name: Driver Location Sensor
-      selector:
-        entity:
-          domain: sensor
-    latest_arrival_sensor:
-      name: Latest Arrival Sensor
-      selector:
-        entity:
-          domain: sensor
-    tts_player:
-      name: TTS Media Player
-      selector:
-        entity:
-          domain: media_player
-    tts_engine:
-      name: TTS Engine
-      selector:
-        entity:
-          domain: tts
-
-trigger:
-  - entity_id: !input order_stage_sensor
+alias: Uber Eats Active Order Updates TTS
+description: Announce changes to Uber Eats sensors when an active order is detected
+triggers:
+  - entity_id:
+      - sensor.brandon_uber_eats_order_stage
     trigger: state
     id: order_stage_change
-  - entity_id: !input driver_name_sensor
+    alias: When Order Stage Changes
+  - entity_id:
+      - sensor.brandon_uber_eats_driver_name
     trigger: state
     id: driver_name_change
-  - entity_id: !input driver_eta_sensor
+    alias: When Driver Name Changes
+  - entity_id:
+      - sensor.brandon_uber_eats_driver_eta
     trigger: state
     id: driver_eta_change
-  - entity_id: !input restaurant_name_sensor
+    alias: When Driver ETA Chnages
+  - entity_id:
+      - sensor.brandon_uber_eats_restaurant_name
     trigger: state
     id: restaurant_name_change
-  - entity_id: !input driver_location_sensor
+    alias: When Restaurant Name Changes
+  - entity_id:
+      - sensor.brandon_uber_eats_driver_location
     trigger: state
     id: driver_location_change
-
-condition:
+    alias: When Driver Location Chnages
+  - entity_id:
+      - binary_sensor.brandon_uber_eats_active_order
+    trigger: state
+    id: active_order_change
+    alias: When Uber Eats Active Order changes state or any attributes
+conditions:
   - condition: state
-    entity_id: !input active_order_sensor
+    entity_id: binary_sensor.brandon_uber_eats_active_order
     state: "on"
-
-action:
-  # expose blueprint inputs at runtime as variables (safe to reference in templates)
-  - variables:
-      user_name: !input user_name
-      order_stage_sensor: !input order_stage_sensor
-      driver_name_sensor: !input driver_name_sensor
-      driver_eta_sensor: !input driver_eta_sensor
-      restaurant_name_sensor: !input restaurant_name_sensor
-      driver_location_sensor: !input driver_location_sensor
-      latest_arrival_sensor: !input latest_arrival_sensor
-      tts_player: !input tts_player
-      tts_engine: !input tts_engine
-
+    enabled: true
+    alias: If There's An Active Uber Eats Other
+actions:
   - choose:
       - conditions:
           - condition: trigger
             id: restaurant_name_change
           - condition: template
-            value_template: "{{ states(restaurant_name_sensor) != 'No Restaurant' }}"
+            value_template: >-
+              {{ states('sensor.brandon_uber_eats_restaurant_name') != 'No
+              Restaurant' }}
         sequence:
-          - service: tts.speak
-            target:
-              entity_id: !input tts_engine
+          - action: tts.speak
+            metadata: {}
             data:
-              media_player_entity_id: !input tts_player
-              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. New ' ~ states(restaurant_name_sensor) ~ ' order received for ' ~ user_name) | string }}"
+              cache: false
+              message: >-
+                Message from UberEats, New {{
+                states('sensor.brandon_uber_eats_restaurant_name') }} order
+                received for Brandon.
+              media_player_entity_id: media_player.brandons_bedroom
+            target:
+              entity_id: tts.google_translate_en_com
         alias: If Restaurant Name Updates
-
       - conditions:
           - condition: trigger
             id: driver_name_change
           - condition: template
-            value_template: "{{ states(driver_name_sensor) != 'No Driver Assigned' }}"
+            value_template: >-
+              {{ states('sensor.brandon_uber_eats_driver_name') != 'No Driver
+              Assigned' }}
         sequence:
-          - service: tts.speak
-            target:
-              entity_id: !input tts_engine
+          - action: tts.speak
+            metadata: {}
             data:
-              media_player_entity_id: !input tts_player
-              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. ' ~ states(driver_name_sensor) ~ ' has been assigned to your ' ~ states(restaurant_name_sensor) ~ ' order.') | string }}"
+              cache: false
+              message: >-
+                {{ states('sensor.brandon_uber_eats_driver_name') }} has been
+                assigned to your {{
+                states('sensor.brandon_uber_eats_restaurant_name') }} order.
+              media_player_entity_id: media_player.brandons_bedroom
+            target:
+              entity_id: tts.google_translate_en_com
         alias: If Driver Name Updates
-
       - conditions:
           - condition: trigger
             id: order_stage_change
           - condition: template
-            value_template: "{{ trigger.from_state is not none and trigger.to_state is not none and trigger.from_state.state != trigger.to_state.state and trigger.to_state.state != 'No Active Order' }}"
+            value_template: >-
+              {{ trigger.from_state.state != trigger.to_state.state and
+              trigger.to_state.state != 'No Active Order' }}
         sequence:
-          - service: tts.speak
-            target:
-              entity_id: !input tts_engine
+          - action: tts.speak
+            metadata: {}
             data:
-              media_player_entity_id: !input tts_player
-              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. Your ' ~ states(restaurant_name_sensor) ~ ' order is now ' ~ states(order_stage_sensor)) | string }}"
+              cache: false
+              message: >-
+                Message From Uber Eats: Your {{
+                states('sensor.brandon_uber_eats_restaurant_name') }} order is
+                now, {{ states('sensor.brandon_uber_eats_order_stage') }}
+              media_player_entity_id: media_player.brandons_bedroom
+            target:
+              entity_id: tts.google_translate_en_com
         alias: If Order Stage Updates
-
       - conditions:
           - condition: trigger
             id: driver_eta_change
           - condition: template
-            value_template: "{{ states(driver_eta_sensor) not in ['unknown', 'none', ''] }}"
+            value_template: "{{ states('sensor.brandon_uber_eats_driver_eta') != 'unknown' }}"
         sequence:
-          - service: tts.speak
-            target:
-              entity_id: !input tts_engine
+          - action: tts.speak
+            metadata: {}
             data:
-              media_player_entity_id: !input tts_player
-              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. Your ' ~ states(restaurant_name_sensor) ~ ' order is now expected to arrive at ' ~ states(driver_eta_sensor) ~ ' and no later than ' ~ states(latest_arrival_sensor)) | string }}"
+              cache: false
+              message: >-
+                Your {{ states('sensor.brandon_uber_eats_restaurant_name') }}
+                order is now espected to arrive at {{
+                states('sensor.brandon_uber_eats_driver_eta') }} and no later
+                than {{ states('sensor.brandon_uber_eats_latest_arrival') }}
+              media_player_entity_id: media_player.brandons_bedroom
+            target:
+              entity_id: tts.google_translate_en_com
         alias: If Driver ETA Updates
-
       - conditions:
           - condition: trigger
-            id: driver_location_change
+            id:
+              - driver_location_change
           - condition: template
-            value_template: "{{ states(driver_location_sensor) not in ['No Active Order', 'unknown', 'none', ''] }}"
+            value_template: >-
+              {{ states('sensor.brandon_uber_eats_driver_location') != 'No
+              Active Order' }}
         sequence:
           - delay:
+              hours: 0
+              minutes: 0
               seconds: 30
-          - service: tts.speak
-            target:
-              entity_id: !input tts_engine
+              milliseconds: 0
+          - action: tts.speak
+            metadata: {}
             data:
-              media_player_entity_id: !input tts_player
-              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. ' ~ states(driver_name_sensor) ~ ' was last seen near ' ~ (states(driver_location_sensor) | default('')) | default('') ) | string }}"
+              cache: false
+              media_player_entity_id: media_player.brandons_bedroom
+              message: >-
+                Message From UberEats. {{
+                states('sensor.brandon_uber_eats_driver_name') }} was last seen
+                near {{ states('sensor.brandon_uber_eats_driver_location') }}
+                with your {{ states('sensor.brandon_uber_eats_restaurant_name')
+                }} order, and heading to you!.
+            target:
+              entity_id: tts.google_translate_en_com
         alias: If Driver Location Updates
-
+      - conditions:
+          - condition: trigger
+            id: active_order_change
+          - condition: template
+            value_template: "{{ trigger.to_state.state != 'off' }}"
+        sequence:
+          - service: tts.google_translate_speak
+            data:
+              entity_id: tts.google_translate_en_com
+              media_player_entity_id: media_player.brandons_bedroom
+              message: >-
+                New Uber Eats order received for Brandon from {{ states('sensor.brandon_uber_eats_restaurant_name') }}.
+        alias: If Active Order Changes
     default: []
-
 mode: queued
 max: 4
