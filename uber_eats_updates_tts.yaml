@@ -1,0 +1,171 @@
+blueprint:
+  name: Uber Eats Active Order Updates TTS
+  description: Announce changes to Uber Eats sensors when an active order is detected
+  domain: automation
+  input:
+    active_order_sensor:
+      name: Active Order Binary Sensor
+      description: The binary sensor that indicates an active order (e.g., binary_sensor.brandon_uber_eats_active_order)
+      selector:
+        entity:
+          domain: binary_sensor
+      default: binary_sensor.brandon_uber_eats_active_order
+    order_stage_sensor:
+      name: Order Stage Sensor
+      description: The sensor for order stage (e.g., sensor.brandon_uber_eats_order_stage)
+      selector:
+        entity:
+          domain: sensor
+      default: sensor.brandon_uber_eats_order_stage
+    driver_name_sensor:
+      name: Driver Name Sensor
+      description: The sensor for driver name (e.g., sensor.brandon_uber_eats_driver_name)
+      selector:
+        entity:
+          domain: sensor
+      default: sensor.brandon_uber_eats_driver_name
+    driver_eta_sensor:
+      name: Driver ETA Sensor
+      description: The sensor for driver ETA (e.g., sensor.brandon_uber_eats_driver_eta)
+      selector:
+        entity:
+          domain: sensor
+      default: sensor.brandon_uber_eats_driver_eta
+    restaurant_name_sensor:
+      name: Restaurant Name Sensor
+      description: The sensor for restaurant name (e.g., sensor.brandon_uber_eats_restaurant_name)
+      selector:
+        entity:
+          domain: sensor
+      default: sensor.brandon_uber_eats_restaurant_name
+    driver_location_sensor:
+      name: Driver Location Sensor
+      description: The sensor for driver location (e.g., sensor.brandon_uber_eats_driver_location)
+      selector:
+        entity:
+          domain: sensor
+      default: sensor.brandon_uber_eats_driver_location
+    latest_arrival_sensor:
+      name: Latest Arrival Sensor
+      description: The sensor for latest arrival (e.g., sensor.brandon_uber_eats_latest_arrival)
+      selector:
+        entity:
+          domain: sensor
+      default: sensor.brandon_uber_eats_latest_arrival
+    tts_player:
+      name: TTS Media Player
+      description: The media player for TTS output (e.g., media_player.brandons_bedroom)
+      selector:
+        entity:
+          domain: media_player
+      default: media_player.brandons_bedroom
+    tts_engine:
+      name: TTS Engine
+      description: The TTS entity (e.g., tts.google_translate_en_com)
+      selector:
+        entity:
+          domain: tts
+      default: tts.google_translate_en_com
+
+trigger:
+  - entity_id: !input order_stage_sensor
+    trigger: state
+    id: order_stage_change
+  - entity_id: !input driver_name_sensor
+    trigger: state
+    id: driver_name_change
+  - entity_id: !input driver_eta_sensor
+    trigger: state
+    id: driver_eta_change
+  - entity_id: !input restaurant_name_sensor
+    trigger: state
+    id: restaurant_name_change
+  - entity_id: !input driver_location_sensor
+    trigger: state
+    id: driver_location_change
+
+condition:
+  - condition: state
+    entity_id: !input active_order_sensor
+    state: "on"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: restaurant_name_change
+          - condition: template
+            value_template: "{{ states(!input restaurant_name_sensor) != 'No Restaurant' }}"
+        sequence:
+          - action: tts.speak
+            data:
+              cache: false
+              message: >-
+                Message from UberEats, New {{ states(!input restaurant_name_sensor) }} order received for Brandon.
+              media_player_entity_id: !input tts_player
+            target:
+              entity_id: !input tts_engine
+      - conditions:
+          - condition: trigger
+            id: driver_name_change
+          - condition: template
+            value_template: "{{ states(!input driver_name_sensor) != 'No Driver Assigned' }}"
+        sequence:
+          - action: tts.speak
+            data:
+              cache: false
+              message: >-
+                {{ states(!input driver_name_sensor) }} has been assigned to your {{ states(!input restaurant_name_sensor) }} order.
+              media_player_entity_id: !input tts_player
+            target:
+              entity_id: !input tts_engine
+      - conditions:
+          - condition: trigger
+            id: order_stage_change
+          - condition: template
+            value_template: "{{ trigger.from_state.state != trigger.to_state.state and trigger.to_state.state != 'No Active Order' }}"
+        sequence:
+          - action: tts.speak
+            data:
+              cache: false
+              message: >-
+                Message From Uber Eats: Your {{ states(!input restaurant_name_sensor) }} order is now, {{ states(!input order_stage_sensor) }}
+              media_player_entity_id: !input tts_player
+            target:
+              entity_id: !input tts_engine
+      - conditions:
+          - condition: trigger
+            id: driver_eta_change
+          - condition: template
+            value_template: "{{ states(!input driver_eta_sensor) != 'unknown' }}"
+        sequence:
+          - action: tts.speak
+            data:
+              cache: false
+              message: >-
+                Your {{ states(!input restaurant_name_sensor) }} order is now espected to arrive at {{ states(!input driver_eta_sensor) }} and no later than {{ states(!input latest_arrival_sensor) }}
+              media_player_entity_id: !input tts_player
+            target:
+              entity_id: !input tts_engine
+      - conditions:
+          - condition: trigger
+            id: driver_location_change
+          - condition: template
+            value_template: "{{ states(!input driver_location_sensor) != 'No Active Order' }}"
+        sequence:
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 30
+              milliseconds: 0
+          - action: tts.speak
+            data:
+              cache: false
+              message: >-
+                Message From UberEats. {{ states(!input driver_name_sensor) }} was last seen near {{ states(!input driver_location_sensor) | split(',') | first | strip }} with your {{ states(!input restaurant_name_sensor) }} order, and heading to you!.
+              media_player_entity_id: !input tts_player
+            target:
+              entity_id: !input tts_engine
+    default: []
+mode: queued
+max: 4
