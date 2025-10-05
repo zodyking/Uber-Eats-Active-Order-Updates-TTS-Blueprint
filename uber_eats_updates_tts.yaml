@@ -2,42 +2,33 @@ blueprint:
   name: Uber Eats Active Order Updates TTS
   description: >-
     ### Uber Eats Active Order Updates TTS Blueprint
-    
-    ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
-    
-    This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected. It triggers on updates to order stage, driver name, driver ETA, restaurant name, and driver location, and uses TTS to speak customized messages.
-    
-    **Features:**
-    
-    - Announces new orders with restaurant name.
 
+    ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
+
+    This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected. It triggers on updates to order stage, driver name, driver ETA, restaurant name, and driver location, and uses TTS to speak customized messages.
+
+    **Features:**
+    - Announces new orders with restaurant name.
     - Announces when a driver is assigned.
-    
     - Announces order stage changes.
-    
     - Announces ETA updates with latest arrival time.
-    
     - Announces driver location updates with cross street (with 30-second delay to avoid frequent announcements).
 
-    
     **Requirements:**
-    
     - Uber Eats Order Tracking integration installed and configured.
-    
     - TTS engine (e.g., Google Translate TTS) and media player set up.
-    
-    
-    **Notes:**
-    
-    - The automation is queued to handle multiple updates without overlapping.
-    
-    - Customize entity IDs and TTS messages as needed.
-    
-    - For best results, ensure your Uber Eats sensors are updating correctly during an active order.
 
-    
+    **Notes:**
+    - The automation is queued to handle multiple updates without overlapping.
+    - Customize entity IDs and TTS messages as needed.
+    - For best results, ensure your Uber Eats sensors are updating correctly during an active order.
   domain: automation
   input:
+    user_name:
+      name: User Name
+      description: The user's name to include in TTS messages (e.g., Brandon)
+      selector:
+        text:
     active_order_sensor:
       name: Active Order Binary Sensor
       description: The binary sensor for active order (e.g., binary_sensor.brandon_uber_eats_active_order)
@@ -124,7 +115,7 @@ action:
             data:
               cache: false
               message: >-
-                Message from UberEats, New {{ states(!input restaurant_name_sensor) }} order received for Brandon.
+                Message from UberEats, New {{ states(!input restaurant_name_sensor) }} order received for {{ !input user_name }}.
               media_player_entity_id: !input tts_player
             target:
               entity_id: !input tts_engine
