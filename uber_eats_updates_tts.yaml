@@ -1,8 +1,43 @@
 blueprint:
   name: Uber Eats Active Order Updates TTS (fixed)
   description: >-
-    Announces Uber Eats order updates via TTS. This blueprint avoids using
-    !input inside Jinja templates and ensures templated values are strings.
+  ### Uber Eats Active Order Updates TTS Blueprint
+
+    ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
+
+    Welcome to the **Uber Eats Active Order Updates TTS Blueprint**, a stylish and functional automation designed to enhance your Home Assistant experience by announcing real-time updates for your Uber Eats orders. This blueprint leverages Text-to-Speech (TTS) to notify you of key order changes, ensuring you're always in the loop with a seamless voice experience.
+
+    #### Features
+    - 🎉 **New Order Alerts**: Get notified when a new order is placed with the restaurant name.
+    - 🚚 **Driver Assignment**: Hear when a driver is assigned to your order.
+    - 📅 **Stage Updates**: Stay updated on order stages (e.g., preparing, en route).
+    - ⏰ **ETA Notifications**: Receive ETA and latest arrival time updates.
+    - 📍 **Location Tracking**: Announces driver location updates (with a 30-second delay to avoid spam).
+
+    #### Requirements
+    - 📦 **Uber Eats Order Tracking Integration**: Must be installed and configured (available via HACS or manually).
+    - 🔊 **TTS Setup**: A working TTS engine (e.g., Google Translate TTS) and a media player entity.
+
+    #### How to Use
+    1. **Install the Blueprint**:
+       - Click the button below to import this blueprint into your Home Assistant instance:
+       - [Add to my Home Assistant](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgist.githubusercontent.com%2Fzodyking%2Fyourgistid%2Fraw%2Fuber_eats_updates_tts.yaml)
+       - Alternatively, copy this YAML into **Settings > Automations & Scenes > Blueprints > Import Blueprint**.
+    2. **Configure Inputs**:
+       - **User Name**: Enter your name for personalized messages.
+       - **Sensors**: Select the corresponding Uber Eats sensor entities from your integration.
+       - **TTS Player**: Choose your media player (e.g., a smart speaker).
+       - **TTS Engine**: Select your TTS service (e.g., tts.google_translate_en_com).
+    3. **Test**:
+       - Place an Uber Eats order and verify announcements trigger as expected.
+       - Adjust entity IDs if needed via the blueprint configuration.
+
+    #### Notes
+    - ⚠️ **Queue Mode**: Updates are queued to prevent overlap.
+    - 🎨 **Customization**: Tailor entity IDs and messages to your setup.
+    - ✅ **Optimization**: Ensure sensors update correctly during active orders for best results.
+
+  d
   domain: automation
 
   input:
