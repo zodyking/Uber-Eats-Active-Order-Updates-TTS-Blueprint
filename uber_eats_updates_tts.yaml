@@ -145,7 +145,7 @@ action:
               entity_id: !input tts_engine
             data:
               media_player_entity_id: !input tts_player
-              message: "{{ ('Message from UberEats. New ' ~ states(restaurant_name_sensor) ~ ' order received for ' ~ user_name) | string }}"
+              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. New ' ~ states(restaurant_name_sensor) ~ ' order received for ' ~ user_name) | string }}"
         alias: If Restaurant Name Updates
 
       - conditions:
@@ -159,7 +159,7 @@ action:
               entity_id: !input tts_engine
             data:
               media_player_entity_id: !input tts_player
-              message: "{{ (states(driver_name_sensor) ~ ' has been assigned to your ' ~ states(restaurant_name_sensor) ~ ' order.') | string }}"
+              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. ' ~ states(driver_name_sensor) ~ ' has been assigned to your ' ~ states(restaurant_name_sensor) ~ ' order.') | string }}"
         alias: If Driver Name Updates
 
       - conditions:
@@ -173,7 +173,7 @@ action:
               entity_id: !input tts_engine
             data:
               media_player_entity_id: !input tts_player
-              message: "{{ ('Message From Uber Eats: Your ' ~ states(restaurant_name_sensor) ~ ' order is now ' ~ states(order_stage_sensor)) | string }}"
+              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. Your ' ~ states(restaurant_name_sensor) ~ ' order is now ' ~ states(order_stage_sensor)) | string }}"
         alias: If Order Stage Updates
 
       - conditions:
@@ -187,7 +187,7 @@ action:
               entity_id: !input tts_engine
             data:
               media_player_entity_id: !input tts_player
-              message: "{{ ('Your ' ~ states(restaurant_name_sensor) ~ ' order is now expected to arrive at ' ~ states(driver_eta_sensor) ~ ' and no later than ' ~ states(latest_arrival_sensor)) | string }}"
+              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. Your ' ~ states(restaurant_name_sensor) ~ ' order is now expected to arrive at ' ~ states(driver_eta_sensor) ~ ' and no later than ' ~ states(latest_arrival_sensor)) | string }}"
         alias: If Driver ETA Updates
 
       - conditions:
@@ -203,7 +203,7 @@ action:
               entity_id: !input tts_engine
             data:
               media_player_entity_id: !input tts_player
-              message: "{{ ( 'Message From UberEats. ' ~ states(driver_name_sensor) ~ ' was last seen near ' ~ (states(driver_location_sensor) | default('')) | default('') ) | string }}"
+              message: "{{ ('New Message From Uber Eats for ' ~ user_name ~ '. ' ~ states(driver_name_sensor) ~ ' was last seen near ' ~ (states(driver_location_sensor) | default('')) | default('') ) | string }}"
         alias: If Driver Location Updates
 
     default: []
