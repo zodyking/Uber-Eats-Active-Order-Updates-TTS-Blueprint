@@ -9,7 +9,7 @@ blueprint:
     It triggers on updates to order stage, driver name, driver ETA, driver location, and active order status,  
     and uses TTS to speak customized messages.
 
-    **Version:** 1.0  
+    **Version:** 1.2  
 
     **Key Features:**  
 
