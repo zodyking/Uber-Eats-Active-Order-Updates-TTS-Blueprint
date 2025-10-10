@@ -9,7 +9,7 @@ blueprint:
     It triggers on updates to order stage, driver name, driver ETA, driver location, and active order status,  
     and uses TTS to speak customized messages.
 
-    **Version:** 1.2  
+    **Version:** 1.0  
 
     **Key Features:**  
 
@@ -19,7 +19,7 @@ blueprint:
 
     * Announces order stage changes (picked up, en route, arriving, delivered).  
 
-    * Announces driver location updates with cross street and ETA (includes an adjustable delay to avoid frequent announcements).  
+    * Announces driver location updates with cross street and estimated minutes remaining (includes an adjustable delay to avoid frequent announcements).  
 
     * Queued mode to avoid overlapping TTS playback.  
 
@@ -29,11 +29,11 @@ blueprint:
 
     * A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
 
-    * A media player entity (e.g., `media_player.brandons_bedroom`) to play announcements.  
+    * Media player entities (e.g., `media_player.brandons_bedroom`) to play announcements.  
 
     **Important Notes:**  
 
-    * The blueprint exposes inputs (entity IDs / TTS engine / media player / volume / delay) that must be filled when creating the automation from the blueprint.  
+    * The blueprint exposes inputs (entity IDs / TTS engine / media players / volume / delay) that must be filled when creating the automation from the blueprint.  
 
     * Ensure your Uber Eats sensors update their **state** (not only attributes) — this blueprint uses `trigger: state` triggers.  
 
@@ -85,11 +85,13 @@ blueprint:
       selector:
         entity:
           domain: sensor
-    tts_player:
-      name: TTS Media Player
+    tts_players:
+      name: TTS Media Players
+      description: The media players to play announcements on.
       selector:
         entity:
           domain: media_player
+          multiple: true
     tts_engine:
       name: TTS Engine
       selector:
@@ -97,7 +99,7 @@ blueprint:
           domain: tts
     tts_volume:
       name: TTS Volume
-      description: Volume level for the media player (0.0 to 1.0)
+      description: Volume level for the media players (0.0 to 1.0)
       default: 0.3
       selector:
         number:
@@ -148,14 +150,14 @@ action:
       driver_location_sensor: !input driver_location_sensor
       latest_arrival_sensor: !input latest_arrival_sensor
       active_order_sensor: !input active_order_sensor
-      tts_player: !input tts_player
+      tts_players: !input tts_players
       tts_engine: !input tts_engine
   - action: media_player.volume_set
     metadata: {}
     data:
       volume_level: !input tts_volume
     target:
-      entity_id: !input tts_player
+      entity_id: !input tts_players
   - choose:
       - conditions:
           - condition: trigger
@@ -167,7 +169,7 @@ action:
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ ('A new ' ~ states(restaurant_name_sensor) ~ ' order received
                 for ' ~ user_name) | string }}
@@ -182,10 +184,10 @@ action:
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ ( user_name ~ ', ' ~ states(driver_name_sensor) ~ ' has been
-                assigned to your ' ~ states(restaurant_name_sensor) ~ 'ubereats
+                assigned to your ' ~ states(restaurant_name_sensor) ~ ' Uber Eats
                 order.') | string }}
             action: tts.speak
         alias: Driver Assigned To Order
@@ -201,10 +203,10 @@ action:
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ user_name ~ ', Your ' ~ states(restaurant_name_sensor) ~ '
-                order has been ' ~ 'Picked up by ' ~ states(driver_name_sensor)
+                order has been picked up by ' ~ states(driver_name_sensor)
                 | string }}
             action: tts.speak
         alias: If Order Stage = Picked Up
@@ -220,7 +222,7 @@ action:
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ user_name ~ ', Your ' ~ states(restaurant_name_sensor) ~ '
                 order is now on its way to you with ' ~
@@ -239,7 +241,7 @@ action:
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ user_name ~ ', Your ' ~ states(restaurant_name_sensor) ~ '
                 order is nearby with ' ~ states(driver_name_sensor) | string
@@ -258,7 +260,7 @@ action:
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ user_name ~ ', Your ' ~ states(restaurant_name_sensor) ~ '
                 order has arrived, please meet your driver, ' ~
@@ -272,20 +274,33 @@ action:
             value_template: >-
               {{ states(driver_location_sensor) not in ['No Active Order',
               'unknown',
-              'none', ''] and states('sensor.brandon_uber_eats_order_stage') !=
+              'none', ''] and states(order_stage_sensor) !=
               'delivered' }}
         sequence:
+          - variables:
+              minutes_remaining: |
+                {% set eta_str = states(driver_eta_sensor) | default('') %}
+                {% set current_now = now() %}
+                {% set eta_time = strptime(eta_str, '%I:%M %p') if eta_str else none %}
+                {% if eta_time %}
+                  {% set eta_datetime = current_now.replace(hour=eta_time.hour, minute=eta_time.minute, second=0, microsecond=0) %}
+                  {% if eta_datetime < current_now %}
+                    {% set eta_datetime = eta_datetime + timedelta(days=1) %}
+                  {% endif %}
+                  {% set minutes_remaining = ((eta_datetime - current_now).total_seconds() / 60) | round(0) | int %}
+                  {{ minutes_remaining }}
+                {% else %}
+                  0
+                {% endif %}
           - delay:
               seconds: !input location_delay_seconds
           - target:
               entity_id: !input tts_engine
             data:
-              media_player_entity_id: !input tts_player
+              media_player_entity_id: !input tts_players
               message: >-
                 {{ ( user_name ~ '. ' ~ states(driver_name_sensor) ~ ' was last
-                seen near ' ~ (states(driver_location_sensor) ~ ' , estimate
-                arrival at ' ~ states(driver_eta_sensor) | default('')) |
-                default('') ) | string }}
+                seen near ' ~ states(driver_location_sensor) ~ ' and will arrive in ' ~ minutes_remaining ~ ' minutes.') | string }}
             action: tts.speak
         alias: If Driver Location Updates
     default: []
