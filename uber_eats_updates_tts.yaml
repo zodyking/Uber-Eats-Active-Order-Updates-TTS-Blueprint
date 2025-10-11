@@ -207,7 +207,7 @@ trigger:
 
   - platform: time_pattern
     id: Delivery_Updates
-    minutes: !input delivery_updates_minutes
+    minutes: /!input delivery_updates_minutes
 
 condition:
   - condition: state
