@@ -6,262 +6,102 @@ blueprint:
     ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
 
     This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected.  
-    It triggers on updates to order stage, driver name, driver ETA/ETT, driver location, a periodic delivery-updates timer, and active order status,  
+    It triggers on updates to order stage, driver name, ETA/ETT, location, a periodic delivery-updates timer, and active order status,  
     and uses TTS to speak customized messages.
 
+    **Version:** 1.3.5  
 
-    Version 1.3
+    **Key Features:**  
+    * Announces new orders with restaurant name.  
+    * Announces when a driver is assigned.  
+    * Announces order stage changes (picked up, en route, arriving, delivered).  
+    * Delivery updates driven by a configurable time pattern (minutes).  
+    * Location updates use Borough/Quarter + Suburb + **Driver Street** (cross-street) with robust “not No Driver/ETT/ETA” checks.  
+    * Queued mode to avoid overlapping TTS playback.  
 
-    Key Features
-    
-    Announces new orders with restaurant name.  
-    
-    Announces when a driver is assigned.  
-    
-    Announces order stage changes (picked up, en route, arriving, delivered). 
-    
-    Delivery updates driven by a configurable time pattern (minutes). 
-    
-    Location update announcements with cross street + borough/quarter + suburb, with robust filtering so you don’t hear “No Driver Assigned / No ETT Available”.  
-    
-    Queued mode to avoid overlapping TTS playback.
-    
+    **Requirements:**  
+    * Uber Eats Order Tracking integration installed and configured.  
+    * A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
+    * Media player entities to play announcements.  
 
-    Requirements
-    
-    Uber Eats Order Tracking integration installed and configured.  
-    
-    A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
-    
-    Media player entities to play announcements.
-    
-
-    Notes
-    
-    The entity selectors are filtered to the **"Uber Eats"** label where possible. 
-    
-    Ensure your Uber Eats sensors update their **state** (not only attributes).
-    
+    **Important Notes:**  
+    * **Driver Address Sensor** = full formatted address (e.g., “200 W 34th St, New York, NY”).  
+    * **Driver Street Sensor** = short street/cross-street label (e.g., “Atlantic Ave”) — this is what the speech prefers.  
+    * Ensure your Uber Eats sensors update their **state** (not only attributes).  
 
   domain: automation
 
   input:
+    # General
     user_name:
       name: User Name
-      description: Name to include in messages (e.g., Brandon)
-      selector: {text: {}}
+      description: The user's name to include in TTS messages (e.g., Brandon)
+      selector:
+        text:
 
+    # Active order binary sensor
     active_order_sensor:
       name: Active Order Binary Sensor
-      selector: {entity: {domain: binary_sensor}}
+      description: Must be "on" when there is an active order.
+      selector:
+        entity:
+          domain: binary_sensor
 
+    # Core stage/name sensors
     order_stage_sensor:
       name: Order Stage Sensor
-      selector: {entity: {domain: sensor}}
+      description: e.g., picked up, en route, arriving, delivered
+      selector:
+        entity:
+          domain: sensor
 
     driver_name_sensor:
       name: Driver Name Sensor
-      selector: {entity: {domain: sensor}}
+      selector:
+        entity:
+          domain: sensor
 
+    # ETA / ETT + restaurant
     driver_eta_sensor:
       name: Driver ETA Sensor (clock time)
-      selector: {entity: {domain: sensor}}
+      description: e.g., "5:42 PM"
+      selector:
+        entity:
+          domain: sensor
 
     driver_ett_sensor:
       name: Driver ETT Sensor (minutes remaining)
-      selector: {entity: {domain: sensor}}
+      description: e.g., "12 minutes"
+      selector:
+        entity:
+          domain: sensor
 
     restaurant_name_sensor:
       name: Restaurant Name Sensor
-      selector: {entity: {domain: sensor}}
-
-    driver_location_sensor:
-      name: Driver Location Sensor (address/cross-street)
-      selector: {entity: {domain: sensor}}
-
-    driver_street_sensor:
-      name: Driver Street Sensor
-      selector: {entity: {domain: sensor}}
-
-    driver_quarter_sensor:
-      name: Driver Borough/Quarter Sensor
-      selector: {entity: {domain: sensor}}
-
-    driver_suburb_sensor:
-      name: Driver Suburb Sensor
-      selector: {entity: {domain: sensor}}
+      selector:
+        entity:
+          domain: sensor
 
     latest_arrival_sensor:
       name: Latest Arrival Sensor
-      selector: {entity: {domain: sensor}}
-
-    delivery_updates_minutes:
-      name: Delivery Updates Interval (minutes)
-      default: 2
       selector:
-        number: {min: 1, max: 30, step: 1, mode: slider, unit_of_measurement: minutes}
+        entity:
+          domain: sensor
 
-    tts_players:
-      name: TTS Media Players
-      selector: {entity: {domain: media_player, multiple: true}}
-
-    tts_engine:
-      name: TTS Engine
-      selector: {entity: {domain: tts}}
-
-    tts_volume:
-      name: TTS Volume
-      default: 0.3
+    # Location inputs — named exactly as requested
+    driver_address_sensor:
+      name: Driver Address Sensor
+      description: Full formatted address if available.
       selector:
-        number: {min: 0.0, max: 1.0, step: 0.01, mode: slider}
+        entity:
+          domain: sensor
 
-trigger:
-  - platform: state
-    entity_id: !input order_stage_sensor
-    id: order_stage_change
-  - platform: state
-    entity_id: !input driver_name_sensor
-    id: driver_name_change
-  - platform: state
-    entity_id: !input driver_location_sensor
-    id: driver_location_change
-  - platform: state
-    entity_id: !input active_order_sensor
-    id: active_order_change
-  - platform: time_pattern
-    id: Delivery_Updates
-    minutes: !input delivery_updates_minutes
+    driver_street_sensor:
+      name: Driver Street Sensor
+      description: Short street/cross-street label (preferred for speech).
+      selector:
+        entity:
+          domain: sensor
 
-condition:
-  - condition: state
-    entity_id: !input active_order_sensor
-    state: "on"
-
-action:
-  - service: media_player.volume_set
-    target: {entity_id: !input tts_players}
-    data: {volume_level: !input tts_volume}
-
-  - choose:
-      - alias: New Active Order Detected
-        conditions:
-          - condition: trigger
-            id: active_order_change
-          - condition: template
-            value_template: "{{ states(!input active_order_sensor) != 'off' }}"
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ ('A new ' ~ states(!input restaurant_name_sensor) ~ ' order received for ' ~ !input user_name) | string }}
-
-      - alias: Driver Assigned To Order
-        conditions:
-          - condition: trigger
-            id: driver_name_change
-          - condition: template
-            value_template: "{{ states(!input driver_name_sensor) != 'No Driver Assigned' }}"
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ (!input user_name ~ ', ' ~ states(!input driver_name_sensor) ~ ' has been assigned to your ' ~ states(!input restaurant_name_sensor) ~ ' Uber Eats order.') | string }}
-
-      - alias: If Order Stage = Picked Up
-        conditions:
-          - condition: trigger
-            id: order_stage_change
-          - condition: template
-            value_template: >-
-              {{ trigger.from_state is not none and trigger.to_state is not none
-                 and trigger.from_state.state != trigger.to_state.state
-                 and trigger.to_state.state == 'picked up' }}
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ !input user_name ~ ', Your ' ~ states(!input restaurant_name_sensor) ~ ' order has been picked up by ' ~ states(!input driver_name_sensor) | string }}
-
-      - alias: If Order Stage = En Route
-        conditions:
-          - condition: trigger
-            id: order_stage_change
-          - condition: template
-            value_template: >-
-              {{ trigger.from_state is not none and trigger.to_state is not none
-                 and trigger.from_state.state != trigger.to_state.state
-                 and trigger.to_state.state == 'en route' }}
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ !input user_name ~ ', Your ' ~ states(!input restaurant_name_sensor) ~ ' order is now on its way to you with ' ~ states(!input driver_name_sensor) | string }}
-
-      - alias: If Order Stage = Arriving
-        conditions:
-          - condition: trigger
-            id: order_stage_change
-          - condition: template
-            value_template: >-
-              {{ trigger.from_state is not none and trigger.to_state is not none
-                 and trigger.from_state.state != trigger_to_state.state
-                 and trigger.to_state.state == 'arriving' }}
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ !input user_name ~ ', Your ' ~ states(!input restaurant_name_sensor) ~ ' order is nearby with ' ~ states(!input driver_name_sensor) | string }}
-
-      - alias: If Order Stage = Delivered
-        conditions:
-          - condition: trigger
-            id: order_stage_change
-          - condition: template
-            value_template: >-
-              {{ trigger.from_state is not none and trigger.to_state is not none
-                 and trigger.from_state.state != trigger.to_state.state
-                 and trigger.to_state.state == 'delivered' }}
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ !input user_name ~ ', Your ' ~ states(!input restaurant_name_sensor) ~ ' order has arrived, please meet your driver, ' ~ states(!input driver_name_sensor) | string }}
-
-      - alias: Delivery Updates
-        conditions:
-          - condition: trigger
-            id: [driver_location_change, Delivery_Updates]
-          - condition: template
-            value_template: >-
-              {{ (states(!input restaurant_name_sensor)|trim != 'No Restaurant')
-                 and (states(!input driver_street_sensor)|trim != 'No Driver Assigned')
-                 and (states(!input driver_quarter_sensor)|trim != 'No Driver Assigned')
-                 and (states(!input driver_suburb_sensor)|trim != 'No Driver Assigned')
-                 and (states(!input driver_ett_sensor)|trim not in ['No ETT Available','0 minutes'])
-                 and (states(!input driver_eta_sensor)|trim != 'No ETT Available') }}
-        sequence:
-          - service: tts.speak
-            target: {entity_id: !input tts_engine}
-            data:
-              media_player_entity_id: !input tts_players
-              message: >-
-                {{ ( !input user_name ~ '. your ' ~ states(!input restaurant_name_sensor) ~
-                   ' order is on the move, last location ' ~ states(!input driver_street_sensor) ~
-                   ', in ' ~ states(!input driver_quarter_sensor) ~ ', ' ~ states(!input driver_suburb_sensor) ~
-                   '. Estimated arrival in ' ~ states(!input driver_ett_sensor) ~
-                   ' at ' ~ states(!input driver_eta_sensor) ) | string }}
-
-mode: queued
-max: 4
+    driver_quarter_sensor:
+      name: Driver Borough/Quarter Senso
