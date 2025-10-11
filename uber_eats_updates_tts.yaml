@@ -9,7 +9,7 @@ blueprint:
     It triggers on updates to order stage, driver name, driver ETA/ETT, driver location, a periodic delivery-updates timer, and active order status,  
     and uses TTS to speak customized messages.
 
-    **Version:** 1.3
+    **Version:** 1.3.1
 
     **Key Features:**  
     * Announces new orders with restaurant name.  
@@ -25,7 +25,7 @@ blueprint:
     * Media player entities to play announcements.
 
     **Notes:**  
-    * The entity selectors are filtered to the **"Uber Eats"** label where possible.  
+    * HA blueprints do **not** support filtering entity pickers by label; select the right “Uber Eats” entities manually.  
     * Ensure your Uber Eats sensors update their **state** (not only attributes).
 
   domain: automation
@@ -45,8 +45,6 @@ blueprint:
       selector:
         entity:
           domain: binary_sensor
-          filter:
-            - label: "Uber Eats"
 
     # Core stage/name sensors
     order_stage_sensor:
@@ -55,8 +53,6 @@ blueprint:
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     driver_name_sensor:
       name: Driver Name Sensor
@@ -64,8 +60,6 @@ blueprint:
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     # ETA / ETT + restaurant
     driver_eta_sensor:
@@ -74,8 +68,6 @@ blueprint:
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     driver_ett_sensor:
       name: Driver ETT (Minutes Remaining) Sensor
@@ -83,16 +75,12 @@ blueprint:
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     restaurant_name_sensor:
       name: Restaurant Name Sensor
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     # Location group
     driver_location_sensor:
@@ -100,40 +88,30 @@ blueprint:
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     driver_street_sensor:
       name: Driver Street Sensor
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     driver_quarter_sensor:
       name: Driver Borough/Quarter Sensor
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     driver_suburb_sensor:
       name: Driver Suburb Sensor
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     latest_arrival_sensor:
       name: Latest Arrival Sensor
       selector:
         entity:
           domain: sensor
-          filter:
-            - label: "Uber Eats"
 
     # Delivery updates cadence (time_pattern)
     delivery_updates_minutes:
@@ -335,7 +313,7 @@ action:
               - driver_location_change
               - Delivery_Updates
           - condition: template
-            # pasteable single-line UI-safe template
+            # UI-safe single line
             value_template: >-
               {{ (states(restaurant_name_sensor)|trim != 'No Restaurant') and (states(driver_street_sensor)|trim != 'No Driver Assigned') and (states(driver_quarter_sensor)|trim != 'No Driver Assigned') and (states(driver_suburb_sensor)|trim != 'No Driver Assigned') and (states(driver_ett_sensor)|trim not in ['No ETT Available','0 minutes']) and (states(driver_eta_sensor)|trim != 'No ETT Available') }}
         sequence:
