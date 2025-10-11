@@ -365,11 +365,6 @@ action:
         conditions:
           - condition: trigger
             id:
-              - driver_street_change
-              - driver_address_change
-              - driver_quarter_change
-              - driver_suburb_change
-              - driver_county_change
               - Delivery_Updates
           - condition: template
             value_template: >-
