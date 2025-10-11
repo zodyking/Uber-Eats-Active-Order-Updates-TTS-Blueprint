@@ -9,24 +9,39 @@ blueprint:
     It triggers on updates to order stage, driver name, driver ETA/ETT, driver location, a periodic delivery-updates timer, and active order status,  
     and uses TTS to speak customized messages.
 
+
     Version 1.3
 
     Key Features
+    
     Announces new orders with restaurant name.  
+    
     Announces when a driver is assigned.  
-    Announces order stage changes (picked up, en route, arriving, delivered).  
-    Delivery updates driven by a configurable time pattern (minutes).  
+    
+    Announces order stage changes (picked up, en route, arriving, delivered). 
+    
+    Delivery updates driven by a configurable time pattern (minutes). 
+    
     Location update announcements with cross street + borough/quarter + suburb, with robust filtering so you don’t hear “No Driver Assigned / No ETT Available”.  
+    
     Queued mode to avoid overlapping TTS playback.
+    
 
     Requirements
+    
     Uber Eats Order Tracking integration installed and configured.  
+    
     A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
+    
     Media player entities to play announcements.
+    
 
     Notes
-    The entity selectors are filtered to the **"Uber Eats"** label where possible.  
+    
+    The entity selectors are filtered to the **"Uber Eats"** label where possible. 
+    
     Ensure your Uber Eats sensors update their **state** (not only attributes).
+    
 
   domain: automation
 
