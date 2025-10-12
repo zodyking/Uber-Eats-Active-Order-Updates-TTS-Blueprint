@@ -3,7 +3,8 @@ blueprint:
   description: >-
     ### Uber Eats Active Order Updates TTS Blueprint
 
-    ![Uber Eats Banner](https://raw.githubusercontent.com/zodyking/uber-eats-order-tracker/main/image.png)
+    <img width="1460" height="461" alt="image" src="https://github.com/user-attachments/assets/38122230-aac8-4302-b67e-cb361ff19de4" />
+
 
     This blueprint creates an automation that announces changes to Uber Eats order sensors when an active order is detected.  
     It triggers on updates to order stage, driver name, ETA/ETT, location, a periodic delivery-updates timer, and active order status,  
