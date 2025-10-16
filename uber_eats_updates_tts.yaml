@@ -48,13 +48,12 @@ blueprint:
     
 
   domain: automation
-
   input:
     user_name:
       name: User Name
       description: The user's name to include in TTS messages (e.g., Brandon)
       selector:
-        text:
+        text: {}
 
     active_order_sensor:
       name: Active Order Binary Sensor
