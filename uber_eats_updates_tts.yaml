@@ -134,8 +134,7 @@ blueprint:
       selector:
         entity:
           domain: sensor
-
-input:
+          
   delivery_updates_minutes:
     name: Delivery updates interval
     default: "/1"
