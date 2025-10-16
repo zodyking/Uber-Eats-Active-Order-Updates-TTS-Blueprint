@@ -135,12 +135,12 @@ blueprint:
         entity:
           domain: sensor
           
-  delivery_updates_minutes:
-    name: Delivery updates interval
-    default: "/1"
-    selector:
-      select:
-        options: ["/1", "/2", "/3", "/5", "/10", "/15", "/20", "/30"]
+    delivery_updates_minutes:
+      name: Delivery updates interval
+      default: "/1"
+      selector:
+        select:
+          options: ["/1", "/2", "/3", "/5", "/10", "/15", "/20", "/30"]
 
     tts_players:
       name: TTS Media Players
