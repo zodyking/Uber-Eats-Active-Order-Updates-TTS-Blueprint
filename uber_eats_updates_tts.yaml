@@ -135,17 +135,13 @@ blueprint:
         entity:
           domain: sensor
 
-    delivery_updates_minutes:
-      name: Delivery Updates Interval (minutes)
-      description: How often to announce delivery updates (time-pattern trigger).
-      default: 2
-      selector:
-        number:
-          min: 1
-          max: 30
-          step: 1
-          mode: slider
-          unit_of_measurement: minutes
+input:
+  delivery_updates_minutes:
+    name: Delivery updates interval
+    default: "/1"
+    selector:
+      select:
+        options: ["/1", "/2", "/3", "/5", "/10", "/15", "/20", "/30"]
 
     tts_players:
       name: TTS Media Players
@@ -208,7 +204,7 @@ trigger:
 
   - platform: time_pattern
     id: Delivery_Updates
-    minutes: '/' & !input delivery_updates_minutes
+    minutes: !input delivery_updates_minutes
 
 condition:
   - condition: state
