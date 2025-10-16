@@ -15,35 +15,35 @@ blueprint:
     
 
     **Key Features:**  
-    
+     
     * Announces new orders with restaurant name.  
-    
+     
     * Announces when a driver is assigned.  
-    
+     
     * Announces order stage changes (picked up, en route, arriving, delivered).  
-    
+     
     * Delivery updates driven by a configurable time pattern (minutes).  
-    
+     
     * Location updates use Borough/Quarter + Suburb + **Driver Street** (cross-street) with robust “not No Driver/ETT/ETA” checks.  
-    
+     
     * Queued mode to avoid overlapping TTS playback.  
     
 
     **Requirements:**  
-    
+     
     * Uber Eats Order Tracking integration installed and configured.  
-    
+     
     * A TTS engine configured in Home Assistant (e.g., Google Translate TTS).  
-    
+     
     * Media player entities to play announcements.  
     
 
     **Important Notes:**  
-    
+     
     * **Driver Address Sensor** = full formatted address (e.g., “200 W 34th St, New York, NY”).
-    
+     
     * **Driver Street Sensor** = short street/cross-street label (e.g., “Atlantic Ave”) — speech prefers this.  
-    
+     
     * Ensure your Uber Eats sensors update their **state** (not only attributes).  
     
 
